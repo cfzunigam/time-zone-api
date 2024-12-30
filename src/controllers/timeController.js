@@ -1,6 +1,6 @@
 const { DateTime } = require('luxon');
 
-function timeValidator(timeParam, method) {
+function timeValidator(timeParam) {
   const time = DateTime.now().setZone(timeParam);
   const formattedTime = time.toFormat('MMMM dd, yyyy hh:mm a');
   return { formattedTime };
@@ -11,7 +11,7 @@ const getTime = (req, res) => {
 
   try {
     if (timezone) {
-      const result = timeValidator(timezone, 'timezone');
+      const result = timeValidator(timezone);
 
       return res.json({
         type: 'timezone',
@@ -24,7 +24,7 @@ const getTime = (req, res) => {
       .replace(/^UTC/, '')
       .replace(' ', '+');
       
-      const result = timeValidator('UTC' + cleanedOffset, 'utcOffset');
+      const result = timeValidator('UTC' + cleanedOffset);
 
       return res.json({
         type: 'utc-offset',
@@ -37,7 +37,7 @@ const getTime = (req, res) => {
       .replace(/^GMT/, '')
       .replace(' ', '+');
 
-      const result = timeValidator(`UTC${cleanedOffset}`, 'gmtOffset');
+      const result = timeValidator(`UTC${cleanedOffset}`);
 
       return res.json({
         type: 'gmt-offset',
