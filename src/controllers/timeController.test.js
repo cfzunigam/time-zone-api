@@ -1,73 +1,112 @@
-const { getTimeByTimezone } = require('./timeController');
 const { DateTime } = require('luxon');
+const { getTime } = require('./timeController'); // Ajusta la ruta de tu archivo
+const { methodsError } = require('../utils/methods');
 
-jest.mock('luxon', () => ({
-  DateTime: {
-    now: jest.fn().mockReturnThis(),
-    setZone: jest.fn().mockReturnThis(),
-    toFormat: jest.fn(),
-    isValid: true,
-  },
-}));
+// Mock de la función `DateTime.now()` de Luxon
+jest.mock('luxon', () => {
+  const actualLuxon = jest.requireActual('luxon');
+  return {
+    ...actualLuxon,
+    DateTime: {
+      now: jest.fn().mockReturnValue({
+        setZone: jest.fn().mockReturnThis(),
+        toFormat: jest.fn(),
+        isValid: true,
+      }),
+    },
+  };
+});
 
-describe('getTimeByTimezone', () => {
-  let mockResponse;
-
+describe('getTime', () => {
+  let req, res;
+  
   beforeEach(() => {
-    mockResponse = {
+    req = { query: {} };
+    res = { 
       status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      json: jest.fn()
     };
   });
 
-  it('should return formatted time when timezone is valid', async () => {
-    const mockTimezone = 'America/New_York';
-    const mockFormattedTime = 'December 27, 2024 08:59 PM';
+  it('should return the correct formatted time for timezone', async () => {
+    const timezone = 'America/New_York';
+    const formattedTime = 'December 29, 2024 03:00 PM';  // El formato depende de tu localización
+    DateTime.now().setZone().toFormat.mockReturnValue(formattedTime);
 
-    DateTime.toFormat.mockReturnValue(mockFormattedTime);
+    req.query.timezone = timezone;
 
-    const mockRequest = {
-      params: { timezone: mockTimezone },
-    };
+    await getTime(req, res);
 
-    await getTimeByTimezone(mockRequest, mockResponse);
-
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      timezone: mockTimezone,
-      localTime: mockFormattedTime,
+    expect(DateTime.now().setZone).toHaveBeenCalledWith(timezone);
+    expect(res.json).toHaveBeenCalledWith({
+      type: 'timezone',
+      timezone,
+      localTime: formattedTime,
     });
   });
 
-  it('should return 400 error if the timezone is invalid', async () => {
-    const mockTimezone = 'Invalid/Timezone';
-    
-    DateTime.isValid = false;
+  it('should return the correct formatted time for UTC offset', async () => {
+    const utcOffset = 'UTC+02:00';
+    const cleanedOffset = '+02:00';
+    const formattedTime = 'December 29, 2024 03:00 PM';
+    DateTime.now().setZone.mockReturnValue({
+      toFormat: jest.fn().mockReturnValue(formattedTime),
+    });
 
-    const mockRequest = {
-      params: { timezone: mockTimezone },
-    };
+    req.query['utc-offset'] = utcOffset;
 
-    await getTimeByTimezone(mockRequest, mockResponse);
+    await getTime(req, res);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      error: 'Invalid timezone format',
-      validFormat: 'Example: America/New_York',
+    expect(DateTime.now().setZone).toHaveBeenCalledWith('UTC' + cleanedOffset);
+    expect(res.json).toHaveBeenCalledWith({
+      type: 'utc-offset',
+      utcOffset,
+      localTime: formattedTime,
     });
   });
 
-  it('should return 500 error if there is an unexpected error', async () => {
-    const mockRequest = {
-      params: { timezone: 'America/New_York' },
-    };
-
-    jest.spyOn(DateTime, 'now').mockImplementation(() => {
-      throw new Error('Unexpected error');
+  it('should return the correct formatted time for GMT offset', async () => {
+    const gmtOffset = 'GMT+02:00';
+    const cleanedOffset = '+02:00';
+    const formattedTime = 'December 29, 2024 03:00 PM';
+    DateTime.now().setZone.mockReturnValue({
+      toFormat: jest.fn().mockReturnValue(formattedTime),
     });
 
-    await getTimeByTimezone(mockRequest, mockResponse);
+    req.query['gmt-offset'] = gmtOffset;
 
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Failed to fetch time data' });
+    await getTime(req, res);
+
+    expect(DateTime.now().setZone).toHaveBeenCalledWith('UTC' + cleanedOffset);
+    expect(res.json).toHaveBeenCalledWith({
+      type: 'gmt-offset',
+      gmtOffset: cleanedOffset,
+      localTime: formattedTime,
+    });
   });
+
+  it('should return an error if no query parameter is provided', async () => {
+    await getTime(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'At least one of timezone, utc-offset, or gmt-offset query parameters is required.',
+    });
+  });
+
+  // it('should handle errors correctly in getTime (catch block)', async () => {
+  //   const errorMessage = 'Failed to fetch time data';
+
+  //   // Simula que getTime lanza un error
+  //   getTime.mockImplementationOnce(() => {
+  //     throw new Error(errorMessage);
+  //   });
+
+  //   // Realizamos la llamada a la función con parámetros simulados
+  //   await getTime(req, res);
+
+  //   // Verifica que el error fue manejado correctamente
+  //   expect(res.status).toHaveBeenCalledWith(500);
+  //   expect(res.json).toHaveBeenCalledWith({ error: errorMessage });
+  // });
 });

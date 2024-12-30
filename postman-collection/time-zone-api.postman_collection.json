@@ -1,0 +1,75 @@
+{
+	"info": {
+		"_postman_id": "97292b15-ad82-4fa3-94d7-6053298dec1a",
+		"name": "time-zone-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37907065"
+	},
+	"item": [
+		{
+			"name": "gmt",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/time/gmt-offset/GMT+02:00",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"time",
+						"gmt-offset",
+						"GMT+02:00"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "utc",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/time/utc-offset/GMT+02:00",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"time",
+						"utc-offset",
+						"GMT+02:00"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "zone",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/time/America%2FNew_York",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"time",
+						"America%2FNew_York"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

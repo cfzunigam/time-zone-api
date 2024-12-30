@@ -1,72 +1,60 @@
 const { DateTime } = require('luxon');
+const { methodsError } = require('../utils/methods');
 
-const validateTimezone = (req, res, next) => {
-  const { timezone } = req.params;
-
-  if (!DateTime.now().setZone(timezone).isValid) {
-    return res.status(400).json({
-      error: 'Invalid timezone format',
-      validFormat: 'Example: America/New_York'
-    });
-  }
-
-  next();
-};
-
-const validateUtcOffset = (req, res, next) => {
-  const { utcOffset } = req.params;
-
-  // Elimina el prefijo "UTC" si existe
-  const cleanedOffset = utcOffset.replace(/^UTC/, '');
-
-
-  // Verifica si el formato es válido usando una expresión regular
-  const utcPattern = /^[+-]\d{2}:\d{2}$/;
-
-  if (!utcPattern.test(cleanedOffset)) {
-    return res.status(400).json({
-      error: 'Invalid UTC offset format',
-      validFormat: 'Example: UTC+02:00 or UTC-05:00',
-    });
-  }
+const validateTimeParam = (req, res, next) => {
+  let { timezone, 'utc-offset': utcOffset, 'gmt-offset': gmtOffset } = req.query;
 
   try {
-    // Intenta crear un DateTime con el UTC offset
-    const time = DateTime.now().setZone('UTC' + cleanedOffset);
-
-    if (!time.isValid) {
-      return res.status(400).json({
-        error: 'Invalid UTC offset value',
-        validFormat: 'Example: UTC+02:00 or UTC-05:00',
-      });
+    if (timezone) {
+      if (!DateTime.now().setZone(timezone).isValid) {
+        return res.status(400).json({
+          error: methodsError['timezone']?.error || 'Invalid time parameter',
+          validFormat: methodsError['timezone']?.validFormat || 'Invalid format',
+        });
+      }
+      return next();
     }
 
-    // Si todo es válido, pasa al siguiente middleware
-    next();
-  } catch (error) {
-    console.error('Error in validateUtcOffset:', error);
-    return res.status(500).json({ error: 'Failed to validate UTC offset' });
-  }
-};
+    if (utcOffset) {
+      const cleanedOffset = utcOffset
+      .replace(/^UTC/, '')
+      .replace(' ', '+');
+      
+      const utcPattern = /^[+-]\d{2}:\d{2}$/;
+    
+      if (!utcPattern.test(cleanedOffset)) {
+        return res.status(400).json({
+          error: methodsError['utcOffset']?.error || 'Invalid time parameter',
+          validFormat: methodsError['utcOffset']?.validFormat || 'Invalid format',
+        });
+      }
+      return next();
+    }
+    
 
-const validateGmtOffset = (req, res, next) => {
-  const { gmtOffset } = req.params;
-
-  // Verifica si el formato es algo como "GMT+02:00" o "GMT-05:00"
-  const gmtPattern = /^GMT([+-])(\d{2}):(\d{2})$/;
-
-  if (!gmtPattern.test(gmtOffset)) {
+    if (gmtOffset) {
+      const cleanedGmtOffset = gmtOffset.replace(' ', '+');
+      const gmtPattern = /^GMT([+-])(\d{2}):(\d{2})$/;
+    
+      if (!gmtPattern.test(cleanedGmtOffset)) {
+        return res.status(400).json({
+          error: methodsError['gmtOffset']?.error || 'Invalid time parameter',
+          validFormat: methodsError['gmtOffset']?.validFormat || 'Invalid format',
+        });
+      }
+    
+      return next();
+    }
+    
     return res.status(400).json({
-      error: 'Invalid GMT offset format',
-      validFormat: 'Example: GMT+02:00 or GMT-05:00'
+      error: 'At least one of timezone, utc-offset, or gmt-offset query parameters is required.',
     });
+  } catch (error) {
+    console.error('Error in validateTimeParam:', error);
+    return res.status(500).json({ error: 'Failed to validate time parameter' });
   }
-
-  next();
 };
 
 module.exports = {
-  validateTimezone,
-  validateUtcOffset,
-  validateGmtOffset,
+  validateTimeParam,
 };

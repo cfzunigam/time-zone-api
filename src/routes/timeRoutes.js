@@ -1,11 +1,9 @@
 const express = require('express');
-const { getTimeByTimezone, getTimeByUtcOffset, getTimeByGmtOffset } = require('../controllers/timeController');
-const { validateTimezone, validateGmtOffset } = require('../utils/validateTimezone');
+const { getTime } = require('../controllers/timeController');
+const { validateTimeParam } = require('../utils/validateTimezone');
 
 const router = express.Router();
 
-router.get('/time/:timezone', validateTimezone, getTimeByTimezone);
-router.get('/time/utc-offset/:utcOffset', getTimeByUtcOffset);
-router.get('/time/gmt-offset/:gmtOffset', validateGmtOffset, getTimeByGmtOffset);
+router.get('/time', validateTimeParam, getTime);
 
 module.exports = router;

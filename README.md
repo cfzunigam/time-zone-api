@@ -13,12 +13,20 @@ The Time Zone API is a microservice that provides time zone information for diff
 - **Method:** `GET`
 - **Query Parameters:**
     - `location` (required): The name of the location (e.g., `America/New_York`)
+    - `utc-offset` (required): The UTC offset in the format `UTC±hh:mm`, where `hh` represents hours and `mm` represents minutes. Example: `UTC+02:00`, `UTC-05:00`.
+    - `gmt-offset` (required): The GMT offset in the format `GMT±hh:mm`, where `hh` represents hours and `mm` represents minutes. Example: `GMT+02:00`, `GMT-05:00`.
+
 
 ### Get Current Time
 ```sh
-curl -X GET "http://localhost:3000/api/time/America%2FNew_York"
+curl -X GET "http://localhost:3000/api/time?timezone=America/Santiago"
 ```
-
+```sh
+curl -X GET "http://localhost:3000/api/time?utc-offset=UTC-03:00"
+```
+```sh
+curl -X GET "http://localhost:3000/api/time?gmt-offset=GMT+03:00"
+```
 ## Installation
 1. Clone the repository:
      ```sh
